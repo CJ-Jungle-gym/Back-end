@@ -4,13 +4,34 @@ server:
 spring:
   application:
     name: oliveback
-  # H2 Setting Info (H2 Console? ???? ?? ???? ??)
-  h2:
-    console:
-      enabled: true  # H2 Console? ???? ?? (H2 Console? H2 Database? UI? ????? ??)
-      path: /h2-console  # H2 Console? Path
+
+  # 데이터베이스 설정 (MySQL 연결)
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:mysql://dev-rds.cnwi6euwsod1.ap-northeast-2.rds.amazonaws.com:3306/${DB_NAME}  # MySQL 환경변수 사용
+    username: ${DB_USERNAME}  # 환경변수 사용
+    password: ${DB_PASSWORD}  # 환경변수 사용
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: update  # Hibernate가 자동으로 DDL을 처리
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect  # MySQL 8 Dialect 사용
+
+  config:
+    activate:
+      on-profile: local  # 로컬 환경에서 H2 데이터베이스 사용
+
+# 로컬 환경에서 H2 설정 (H2를 사용하여 테스트하려면 이 부분을 활성화)
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:mem:testdb  # H2 메모리 데이터베이스 사용
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -19,12 +40,8 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-    show-sql: true
-
-#  jwt:
-#    secret: thisisaverysecretkeyforjwt123456  # 테스트용
+        dialect: org.hibernate.dialect.H2Dialect  # H2 Dialect 사용
 
 
-  profiles:
-    active: local
+
+
