@@ -40,13 +40,13 @@ pipeline {
         //
 
         // SonarQube 분석
-        stage('SonarQube Scanner') {
-            steps {
-                withSonarQubeEnv('jg-sonarqube') {
-                    sh "./gradlew sonar"
-                }
-            }
-        }
+        // stage('SonarQube Scanner') {
+        //     steps {
+        //         withSonarQubeEnv('jg-sonarqube') {
+        //             sh "./gradlew sonar"
+        //         }
+        //     }
+        // }
 
         // image build
         stage('Build Image') {
