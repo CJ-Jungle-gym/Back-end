@@ -1,85 +1,110 @@
 pipeline {
-    agent any  // 모든 Jenkins 에이전트에서 실행
+    agent any
+
     environment {
         AWS_REGION = 'ap-northeast-2'
-        ECR_REPO_BACKEND = '605134473022.dkr.ecr.ap-northeast-2.amazonaws.com/olive-back'  // 백엔드 ECR URL
-        // ECR_REPO_FRONTEND = '605134473022.dkr.ecr.ap-northeast-2.amazonaws.com/olive-front'  // 프론트엔드 ECR URL
-        IMAGE_TAG = "latest"
+        ECR_REPO = '605134473022.dkr.ecr.ap-northeast-2.amazonaws.com/olive-back'
+        IMAGE_TAG = 'latest'
     }
+
     stages {
         stage('Checkout') {
             steps {
-                // GitHub에서 코드 체크아웃
                 checkout scm
             }
         }
-        stage('Build Backend') {
+
+        stage('Build JAR') { 
             steps {
-                script {
-                    // 백엔드 Gradle 빌드
-                    echo "Building Backend"
-                    sh './gradlew clean build'  // Gradle로 백엔드 빌드
-                    sh 'docker build -t $ECR_REPO_BACKEND:$IMAGE_TAG .'  // 백엔드 Docker 이미지 빌드
+                sh 'chmod +x gradlew' // gradlew에 실행 권한을 부여
+                sh './gradlew clean build'  // Gradle 빌드 수행
+            }
+        }
+
+        // OWASP Dependency Check
+     //    stage('OWASP Dependency-Check Vulnerabilities') {
+     //        steps {
+     //            dir("src"){
+     //                dependencyCheck additionalArguments: ''' 
+     //                -o './'
+     //                -s './'
+     //                -f 'ALL'
+     //                --nvd-mirror https://mirror.nvd.nist.gov
+     //                --caches './dependency-check-cache'
+     //                --prettyPrint''', odcInstallation: 'owasp'
+    
+     //                dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+     //            }
+     //        }
+    	// }
+
+        // SonarQube 분석
+        stage('SonarQube Scanner') {
+            steps {
+                withSonarQubeEnv('jg-sonarqube') {
+                    sh "./gradlew sonar"
                 }
             }
         }
-        // stage('Build Frontend') {
-        //     steps {
-        //         script {
-        //             // 프론트엔드 React 앱 빌드
-        //             echo "Building Frontend"
-        //             sh 'npm install'  // React 앱 의존성 설치
-        //             sh 'npm run build'  // React 앱 빌드
-        //             sh 'docker build -t $ECR_REPO_FRONTEND:$IMAGE_TAG .'  // 프론트엔드 Docker 이미지 빌드
-        //         }
-        //     }
-        // }
-        stage('Run Tests') {
+
+        // image build
+        stage('Build Image') {
             steps {
                 script {
-                    // 백엔드 JUnit 테스트 실행
-                    echo "Running Backend Tests"
-                    sh './gradlew test'  // 백엔드 JUnit 테스트 실행
-                    // // 프론트엔드 테스트 실행 (예: Jest 사용)
-                    // echo "Running Frontend Tests"
-                    // sh 'npm test'  // React 앱 테스트 실행
+                    docker.withRegistry("https://${ECR_REPO}/", '9b45eaf4-a184-44eb-ba8c-8e20a854de1b') {
+                        myapp = docker.build('jenkins-images')
+                    }
                 }
             }
         }
-        stage('Push Docker Images to ECR') {
+
+        // image scan ( Trivy )
+        stage('Scan Image with Trivy') {
             steps {
                 script {
-                    // Docker 이미지를 ECR에 푸시
-                    echo "Pushing Docker images to ECR"
-                    sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO_BACKEND'
-                    sh 'docker push $ECR_REPO_BACKEND:$IMAGE_TAG'  // 백엔드 이미지 푸시
-                    // sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO_FRONTEND'
-                    // sh 'docker push $ECR_REPO_FRONTEND:$IMAGE_TAG'  // 프론트엔드 이미지 푸시
+                    try {
+                        // Trivy로 이미지 스캔하고 HTML 리포트 생성
+                        sh 'trivy image --format template --template "@/root/html.tpl" --output trivy-report.html "${ECR_REPO}:${IMAGE_TAG}"'
+                        echo "Trivy scan completed"
+                    } catch (Exception e) {
+                        echo "Trivy scan failed: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                        throw e 
+                    }
                 }
             }
         }
-        stage('Deploy to Kubernetes (EKS)') {
+
+        stage('Publish Trivy Report') {
             steps {
                 script {
-                    // EKS에 배포 (kubectl 사용)
-                    echo "Deploying to Kubernetes (EKS)"
-                    sh 'kubectl apply -f k8s/backend-deployment.yaml'
-                    sh 'kubectl apply -f k8s/backend-service.yaml'
-                    // sh 'kubectl apply -f k8s/frontend-deployment.yaml'
-                    // sh 'kubectl apply -f k8s/frontend-service.yaml'
+                    // HTML 리포트가 존재하는지 확인하고 리포트를 출력
+                    if (fileExists('trivy-report.html')) {
+                        echo "Trivy report found, publishing HTML report"
+                        publishHTML(target: [
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: false,
+                            keepAll: false,
+                            reportDir: '.',
+                            reportFiles: 'trivy-report.html',
+                            reportName: 'Trivy Vulnerability Report'
+                        ])
+                    } else {
+                        echo "Trivy report not found, skipping HTML report publishing"
+                    }
                 }
             }
         }
-    }
-    post {
-        always {
-            echo 'Pipeline finished.'
-        }
-        success {
-            echo 'Pipeline executed successfully.'
-        }
-        failure {
-            echo 'Pipeline failed.'
+
+        // iamge push
+        stage('Push Image to ECR') {
+            steps {
+                script {
+                    docker.withRegistry("https://${ECR_REPO}/", '9b45eaf4-a184-44eb-ba8c-8e20a854de1b') {
+                        myapp.push("${IMAGE_TAG}")
+                    }
+                }
+            }
         }
     }
 }
