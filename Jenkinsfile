@@ -53,7 +53,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${ECR_REPO}/", '9b45eaf4-a184-44eb-ba8c-8e20a854de1b') {
-                        myapp = docker.build('jenkins-images')
+                        myapp = docker.build('olive-back')
                     }
                 }
             }
