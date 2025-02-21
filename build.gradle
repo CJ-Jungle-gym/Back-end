@@ -67,10 +67,10 @@ plugins {
 }
 
 sonar {
-	properties {
-		property "sonar.projectKey", "rudalsss_jenkins_78ad166b-9010-460b-b36b-21581d9f937a"
-		property "sonar.projectName", "jenkins"
-	}
+    properties {
+        property "sonar.projectKey", "rudalsss_jenkins_78ad166b-9010-460b-b36b-21581d9f937a"
+        property "sonar.projectName", "jenkins"
+    }
 }
 
 group = 'com.example'
@@ -81,10 +81,9 @@ java {
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
-sourceCompatibility = '17'
 
 repositories {
-    mavenCentral()  // Maven Central 리포지토리 추가
+    mavenCentral()
 }
 
 dependencies {
@@ -94,13 +93,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     // Database
-    runtimeOnly 'com.h2database:h2' // 개발용 H2
-//    implementation 'mysql:mysql-connector-java:8.0.32' // MySQL 커넥터 드라이버
-    implementation 'com.mysql:mysql-connector-j:8.0.32'
-    // Hibernate 6.x 의존성 (Spring Boot 3.x와 호환)
-    implementation 'org.hibernate:hibernate-core:6.0.0.Final'  // Hibernate 6.x 사용
+    runtimeOnly 'org.postgresql:postgresql' // PostgreSQL JDBC 드라이버
+    runtimeOnly 'com.h2database:h2' // H2 DB (로컬 개발용)
 
-    // Lombok (코드 간소화)
+    // Lombok
     implementation 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
@@ -116,7 +112,7 @@ dependencies {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()  // JUnit Platform 사용
+    useJUnitPlatform()
 }
 
 
