@@ -59,6 +59,17 @@ pipeline {
             }
         }
 
+        // iamge push
+        stage('Push Image to ECR') {
+            steps {
+                script {
+                    docker.withRegistry("https://${ECR_REPO}/", '9b45eaf4-a184-44eb-ba8c-8e20a854de1b') {
+                        myapp.push("${IMAGE_TAG}")
+                    }
+                }
+            }
+        }
+
         // image scan ( Trivy )
         stage('Scan Image with Trivy') {
             steps {
@@ -92,17 +103,6 @@ pipeline {
                         ])
                     } else {
                         echo "Trivy report not found, skipping HTML report publishing"
-                    }
-                }
-            }
-        }
-
-        // iamge push
-        stage('Push Image to ECR') {
-            steps {
-                script {
-                    docker.withRegistry("https://${ECR_REPO}/", '9b45eaf4-a184-44eb-ba8c-8e20a854de1b') {
-                        myapp.push("${IMAGE_TAG}")
                     }
                 }
             }

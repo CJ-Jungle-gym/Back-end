@@ -5,47 +5,79 @@ spring:
   application:
     name: oliveback
 
-  # 데이터베이스 설정 (MySQL 연결)
+  # 데이터베이스 설정 (PostgreSQL RDS 연결)
   datasource:
-    url: jdbc:mysql://dev-rds.cnwi6euwsod1.ap-northeast-2.rds.amazonaws.com:3306/${DB_NAME}  # MySQL 환경변수 사용
-    username: ${DB_USERNAME}  # 환경변수 사용
-    password: ${DB_PASSWORD}  # 환경변수 사용
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://prod-db.cnwi6euwsod1.ap-northeast-2.rds.amazonaws.com:5432/proddb  # 포트 5432 확인
+    username: dbadmin
+    password: SecurePassword123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10  # 최대 연결 개수
+      connection-timeout: 30000  # 30초 타임아웃
+      idle-timeout: 600000  # 비활성 연결 유지 시간
+      max-lifetime: 1800000  # 연결 최대 수명
+      minimum-idle: 2  # 최소 유휴 커넥션 개수 설정
 
   # JPA 설정
   jpa:
     hibernate:
-      ddl-auto: update  # Hibernate가 자동으로 DDL을 처리
+      ddl-auto: update  # 자동으로 테이블 생성 및 변경 (운영에서는 validate 권장)
+    show-sql: true  # SQL 로그 출력
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect  # MySQL 8 Dialect 사용
+        format_sql: true  # SQL 보기 좋게 출력
+        dialect: org.hibernate.dialect.PostgreSQLDialect  # PostgreSQL 전용 Hibernate Dialect 설정
+        jdbc:
+          batch_size: 30  # 배치 업데이트 성능 향상
+        order_inserts: true  # INSERT 순서 최적화
+        order_updates: true  # UPDATE 순서 최적화
 
-  config:
-    activate:
-      on-profile: local  # 로컬 환경에서 H2 데이터베이스 사용
-
-# 로컬 환경에서 H2 설정 (H2를 사용하여 테스트하려면 이 부분을 활성화)
----
-spring:
-  config:
-    activate:
-      on-profile: local
-  datasource:
-    url: jdbc:h2:mem:testdb  # H2 메모리 데이터베이스 사용
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect  # H2 Dialect 사용
+  # 로그 설정
+  logging:
+    level:
+      org.hibernate.SQL: DEBUG  # SQL 실행 로그
+      org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # SQL 바인딩 값 로그
 
 # backend URL과 CORS 설정
 backend:
   url: ${BACKEND_URL:http://localhost:8080}  # 기본값을 localhost로 설정
+
 cors:
   allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}  # 기본값을 localhost로 설정
 
 
+
+#server:
+#  port: 8080
+#
+#spring:
+#  application:
+#    name: oliveback
+#
+#  # H2 데이터베이스 설정
+#  datasource:
+#    url: jdbc:h2:mem:testdb  # H2 메모리 데이터베이스
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password:
+#
+#  # JPA 설정
+#  jpa:
+#    database-platform: org.hibernate.dialect.H2Dialect
+#    hibernate:
+#      ddl-auto: update  # 애플리케이션 실행 시 자동으로 테이블 생성
+#    properties:
+#      hibernate:
+#        format_sql: true
+#        show_sql: true  # SQL 로그 출력 활성화
+#
+#  h2:
+#    console:
+#      enabled: true   # H2 웹 콘솔 활성화
+#      path: /h2-console  # H2 콘솔 URL 설정
+#
+## backend URL과 CORS 설정
+#backend:
+#  url: ${BACKEND_URL:http://localhost:8080}  # 기본값을 localhost로 설정
+#cors:
+#  allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}  # 기본값을 localhost로 설정
