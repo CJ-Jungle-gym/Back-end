@@ -43,7 +43,7 @@ backend:
   url: ${BACKEND_URL:http://localhost:8080}  # 기본값을 localhost로 설정
 
 cors:
-  allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}  # 기본값을 localhost로 설정
+  allowedOrigins: http://prod.junglegymstore.shop/
 
 
 
