@@ -7,9 +7,9 @@ spring:
 
   # 데이터베이스 설정 (PostgreSQL RDS 연결)
   datasource:
-    url: jdbc:postgresql://prod-db.cnwi6euwsod1.ap-northeast-2.rds.amazonaws.com:5432/proddb  # 포트 5432 확인
-    username: dbadmin
-    password: SecurePassword123
+    url: jdbc:postgresql://event-postgres-db.cnwi6euwsod1.ap-northeast-2.rds.amazonaws.com:5432/eventdb  # 포트 5432 확인
+    username: root
+    password: wjdrmfwla123
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10  # 최대 연결 개수
