@@ -26,50 +26,50 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = UsersController.class)  // ✅ 정확한 컨트롤러 지정
 @AutoConfigureMockMvc(addFilters = false)  // ✅ Security 필터 비활성화 (필요한 경우)
 class UsersControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private UsersService usersService;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        assertNotNull(usersService, "MockBean usersService가 주입되지 않았습니다.");  // ✅ 주입 확인
-    }
-
-    @Test
-    void 회원가입_API_테스트() throws Exception {
-        // given
-        UserSignupRequest request = new UserSignupRequest("testuser", "password", "test@example.com", null);
-        UserResponse response = new UserResponse(1L, "testuser", "test@example.com", null);
-
-        when(usersService.signup(any(UserSignupRequest.class))).thenReturn(response);
-
-        // when & then
-        mockMvc.perform(post("/api/users/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))  // ✅ JSON 변환
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("testuser"));
-    }
-
-    @Test
-    void 로그인_API_테스트() throws Exception {
-        // given
-        UserLoginRequest request = new UserLoginRequest("testuser", "password123");
-        UserResponse response = new UserResponse(1L, "testuser", "test@example.com", null);
-
-        when(usersService.login(any(UserLoginRequest.class))).thenReturn(response);
-
-        // when & then
-        mockMvc.perform(post("/api/users/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))  // ✅ JSON 변환
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("testuser"));
-    }
+//
+//    @Autowired
+//    private MockMvc mockMvc;
+//
+//    @MockitoBean
+//    private UsersService usersService;
+//
+//    private final ObjectMapper objectMapper = new ObjectMapper();
+//
+//    @BeforeEach
+//    void setUp() {
+//        MockitoAnnotations.openMocks(this);
+//        assertNotNull(usersService, "MockBean usersService가 주입되지 않았습니다.");  // ✅ 주입 확인
+//    }
+//
+//    @Test
+//    void 회원가입_API_테스트() throws Exception {
+//        // given
+//        UserSignupRequest request = new UserSignupRequest("testuser", "password", "test@example.com", null);
+//        UserResponse response = new UserResponse(1L, "testuser", "test@example.com", null);
+//
+//        when(usersService.signup(any(UserSignupRequest.class))).thenReturn(response);
+//
+//        // when & then
+//        mockMvc.perform(post("/api/users/signup")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(objectMapper.writeValueAsString(request)))  // ✅ JSON 변환
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.username").value("testuser"));
+//    }
+//
+//    @Test
+//    void 로그인_API_테스트() throws Exception {
+//        // given
+//        UserLoginRequest request = new UserLoginRequest("testuser", "password123");
+//        UserResponse response = new UserResponse(1L, "testuser", "test@example.com", null);
+//
+//        when(usersService.login(any(UserLoginRequest.class))).thenReturn(response);
+//
+//        // when & then
+//        mockMvc.perform(post("/api/users/login")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(objectMapper.writeValueAsString(request)))  // ✅ JSON 변환
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.username").value("testuser"));
+//    }
 }

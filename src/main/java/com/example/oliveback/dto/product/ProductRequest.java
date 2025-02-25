@@ -27,5 +27,7 @@ public class ProductRequest {
 
     @NotBlank(message = "이미지 URL을 입력하세요.")
     private String imageUrl;
-}
 
+    @Min(value = 0, message = "재고는 0개 이상이어야 합니다.") // stock 추가
+    private int stock;
+}

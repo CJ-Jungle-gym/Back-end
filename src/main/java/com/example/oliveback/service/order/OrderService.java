@@ -1,12 +1,14 @@
 package com.example.oliveback.service.order;
 
 import com.example.oliveback.domain.order.Order;
+import com.example.oliveback.domain.product.Product;
 import com.example.oliveback.domain.user.Role;
 import com.example.oliveback.domain.user.Users;
 import com.example.oliveback.dto.order.OrderRequest;
 import com.example.oliveback.dto.order.OrderResponse;
 import com.example.oliveback.exception.CustomException;
 import com.example.oliveback.repository.order.OrderRepository;
+import com.example.oliveback.repository.product.ProductRepository;
 import com.example.oliveback.repository.user.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,25 +24,43 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UsersRepository usersRepository;
+    private final ProductRepository productRepository;
 
     @Transactional
     public OrderResponse createOrder(String username, OrderRequest request) {
         Users user = usersRepository.findByUsername(username)
                 .orElseThrow(CustomException.UserNotFoundException::new);
 
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(CustomException.ProductNotFoundException::new);
+
         if (request.getQuantity() < 1) {
             throw new CustomException.InvalidOrderException();
         }
 
+        if (product.getStock() < request.getQuantity()) {
+            try {
+                throw new CustomException.InsufficientStockException();
+            } catch (CustomException.InsufficientStockException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        // 주문 생성 및 저장
         Order newOrder = Order.builder()
                 .user(user)
-                .productName(request.getProductName())
+                .product(product)
                 .quantity(request.getQuantity())
-                .totalPrice(request.getTotalPrice())
+                .totalPrice(product.getPrice() * request.getQuantity()) // 자동 계산
                 .orderDate(LocalDateTime.now())
                 .build();
 
         orderRepository.save(newOrder);
+
+        // 재고 차감
+        product.setStock(product.getStock() - request.getQuantity());
+        productRepository.save(product);
+
         return OrderResponse.fromEntity(newOrder);
     }
 
@@ -70,3 +90,4 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 }
+

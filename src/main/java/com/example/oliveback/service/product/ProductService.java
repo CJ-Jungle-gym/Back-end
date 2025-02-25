@@ -25,56 +25,28 @@ public class ProductService {
     private final UsersRepository usersRepository;
 
     @Transactional(readOnly = true)
-    public List<ProductResponse> getProducts(int page, int size, String category) {
+    public Page<ProductResponse> getProducts(int page, int size, String category) {
         PageRequest pageable = PageRequest.of(page, size);
         Page<Product> products;
 
         if (category != null && !category.isEmpty()) {
-            products = productRepository.findByCategory(category, pageable);
+            products = productRepository.findByCategoryAndStockGreaterThan(category, 0, pageable);
         } else {
-            products = productRepository.findAll(pageable);
+            products = productRepository.findByStockGreaterThan(0, pageable);
         }
 
-        return products.stream()
-                .map(ProductResponse::fromEntity)
-                .collect(Collectors.toList());
+        // Page<Product>를 Page<ProductResponse>로 변환
+        return products.map(ProductResponse::fromEntity);
     }
 
-//    @Transactional(readOnly = true)
-//    public ProductResponse getProductById(Long productId) {
-//        Product product = productRepository.findById(productId)
-//                .orElseThrow(() -> new IllegalArgumentException("해당 상품을 찾을 수 없습니다."));
-//        return ProductResponse.fromEntity(product);
-//    }
-//
-//    @Transactional
-//    public ProductResponse createProduct(String username, ProductRequest request) {
-//        //관리자 상품등록
-////        Users user = usersRepository.findByUsername(username)
-////                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-////
-////        if (user.getRole() != Role.ADMIN) {
-////            throw new IllegalArgumentException("관리자만 상품을 등록할 수 있습니다.");
-////        }
-//
-//        Product product = Product.builder()
-//                .name(request.getName())
-//                .price(request.getPrice())
-//                .category(request.getCategory())
-//                .description(request.getDescription())
-//                .imageUrl(request.getImageUrl())
-//                .build();
-//
-//        productRepository.save(product);
-//        return ProductResponse.fromEntity(product);
-//    }
+
+
     @Transactional(readOnly = true)
     public ProductResponse getProductById(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(CustomException.ProductNotFoundException::new);
         return ProductResponse.fromEntity(product);
     }
-
 
     @Transactional
     public ProductResponse createProduct(String username, ProductRequest request) {
@@ -91,15 +63,16 @@ public class ProductService {
                 .category(request.getCategory())
                 .description(request.getDescription())
                 .imageUrl(request.getImageUrl())
+                .stock(request.getStock()) // stock 추가
                 .build();
 
         productRepository.save(product);
         return ProductResponse.fromEntity(product);
     }
 
-    //카테고리 별 상품 조회
+    // 카테고리별 상품 조회 (재고가 있는 상품만 반환)
     public List<ProductResponse> getProductsByCategory(String category) {
-        List<Product> products = productRepository.findByCategory(category);
+        List<Product> products = productRepository.findByCategoryAndStockGreaterThan(category, 0);
 
         return products.stream()
                 .map(product -> new ProductResponse(
@@ -108,7 +81,8 @@ public class ProductService {
                         product.getPrice(),
                         product.getCategory(),
                         product.getDescription(),
-                        product.getImageUrl()
+                        product.getImageUrl(),
+                        product.getStock() // stock 추가
                 ))
                 .collect(Collectors.toList());
     }

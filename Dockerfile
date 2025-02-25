@@ -12,3 +12,9 @@ EXPOSE 8080
 
 # ✅ 실행 명령어
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# application.yaml 복사
+COPY src/main/resources/application.yaml /app/application.yaml
+
+# JAR 실행 명령어에 경로를 지정 (필요한 경우)
+ENTRYPOINT ["java", "-Dspring.config.location=/app/application.yaml", "-jar", "app.jar"]

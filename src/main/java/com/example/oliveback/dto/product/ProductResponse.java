@@ -16,6 +16,7 @@ public class ProductResponse {
     private String category;
     private String description;
     private String imageUrl;
+    private int stock; // stock 추가
 
     public static ProductResponse fromEntity(Product product) {
         return ProductResponse.builder()
@@ -25,6 +26,7 @@ public class ProductResponse {
                 .category(product.getCategory())
                 .description(product.getDescription())
                 .imageUrl(product.getImageUrl())
+                .stock(product.getStock()) // stock 반영
                 .build();
     }
 }

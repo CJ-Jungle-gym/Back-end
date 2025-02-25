@@ -69,5 +69,8 @@ public class CustomException extends RuntimeException {
             super("로그인하지 않은 사용자입니다.", HttpStatus.UNAUTHORIZED);
         }
     }
+
+    public static class InsufficientStockException extends Throwable {
+    }
 }
 

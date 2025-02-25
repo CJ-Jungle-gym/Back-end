@@ -30,4 +30,7 @@ public class Product {
 
     @Column(nullable = false, length = 255)
     private String imageUrl;
+
+    @Column(nullable = false)
+    private int stock; // 추가된 재고 필드
 }
