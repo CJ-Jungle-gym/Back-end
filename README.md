@@ -10,7 +10,8 @@
 <div markdown="1">       
 </br>
 
-  ![올리브영](https://github.com/user-attachments/assets/565494b3-c827-4dd0-93ac-0e2c4f94d5e7)
+ ![Olive](https://github.com/user-attachments/assets/77a0469f-4e8c-435c-adff-5c686f987229)
+
 
 </div>
 </details>
